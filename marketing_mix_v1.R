@@ -15,8 +15,15 @@ mcf_data <- get_mcf(profile, start.date, end.date,
                      dimensions = "mcf:basicChannelGroupingPath",
                      fetch.by = "day")
 
+#limit to ecommerce transactions only
+setDT(mcf_data)
+mcf_data <- mcf_data[conversionType=="Transaction"]
+
 #create path length metric
-mcf_data$pathlength <- stringr::str_count(mcf_data$mediumPath, ">") + 1
+mcf_data$pathlength <- stringr::str_count(mcf_data$basicChannelGroupingPath, ">") + 1
+
+#remove multi word channel names (problematic for ChannelAttribution script)
+mcf_data$basicChannelGroupingPath <- gsub("(?<=\\w)\\s(?=\\w|\\$)", "", mcf_data$basicChannelGroupingPath, perl = TRUE)
 
 #create heuristic multi-channel models
 H <- heuristic_models(mcf_data, 'basicChannelGroupingPath', 'totalConversions', var_value = 'totalConversionValue')
